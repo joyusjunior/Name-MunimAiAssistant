@@ -1,0 +1,79 @@
+{
+  "name": "Munim AI Invoice Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "functionCode": "\n// Parse incoming WhatsApp text\nconst text = $json.body.toLowerCase();\nif (text.includes(\"invoice\")) {\n    const match = text.match(/(\\d+)\\s*(boxes|packs|units)?\\s*@\\s*(\\d+)\\s*(\\d+)%\\s*gst/);\n    if (!match) throw new Error(\"Could not parse invoice data.\");\n\n    const qty = parseInt(match[1]);\n    const rate = parseFloat(match[3]);\n    const gst_percent = parseInt(match[4]);\n    const gst_amt = qty * rate * gst_percent / 100;\n    const total = qty * rate + gst_amt;\n\n    return [{\n        json: {\n            \"Invoice No\": \"INV-\" + new Date().getTime(),\n            \"Date\": new Date().toLocaleDateString('en-IN'),\n            \"Customer Name\": \"WhatsApp User\",\n            \"Item Description\": `${qty} @ \u20b9${rate}`,\n            \"Qty\": qty,\n            \"Rate (\u20b9)\": rate,\n            \"GST %\": gst_percent,\n            \"GST Amt (\u20b9)\": gst_amt,\n            \"Total (\u20b9)\": total,\n            \"Due Date\": new Date(new Date().getTime() + 14 * 86400000).toLocaleDateString('en-IN'),\n            \"Paid\": \"No\"\n        }\n    }];\n}\nthrow new Error(\"Not an invoice command.\");\n"
+      },
+      "name": "Parse WhatsApp Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "REPLACE_WITH_YOUR_SHEET_ID",
+        "range": "Invoices!A:K",
+        "options": {}
+      },
+      "name": "Append to Invoices",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": "Google Sheets Account"
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "accountSid": "={{$credentials.twilio.accountSid}}",
+        "authToken": "={{$credentials.twilio.authToken}}",
+        "from": "whatsapp:+14155238886",
+        "to": "={{$json.From}}",
+        "message": "Invoice saved to Munim AI sheet \ud83d\udcc4\u2705"
+      },
+      "name": "Reply to WhatsApp",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ],
+      "credentials": {
+        "twilioApi": "Twilio Account"
+      }
+    }
+  ],
+  "connections": {
+    "Parse WhatsApp Message": {
+      "main": [
+        [
+          {
+            "node": "Append to Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Invoices": {
+      "main": [
+        [
+          {
+            "node": "Reply to WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
