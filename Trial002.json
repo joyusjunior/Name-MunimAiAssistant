@@ -1,0 +1,70 @@
+{
+  "name": "Munim AI WhatsApp Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "accountSid": "={{$credentials.twilio.accountSid}}",
+        "authToken": "={{$credentials.twilio.authToken}}",
+        "from": "whatsapp:+14155238886",
+        "to": "={{$json[\"From\"]}}",
+        "message": "Munim AI: Your request has been processed successfully."
+      },
+      "name": "Send WhatsApp Message",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "twilioApi": "Twilio Account"
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "your-google-sheet-id",
+        "range": "Invoices!A:D",
+        "options": {}
+      },
+      "name": "Add Invoice to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": "Google Sheets Account"
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ json: { invoiceNumber: 'INV-1001', amount: 1000, gst: 18 } }];"
+      },
+      "name": "Generate Invoice Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [50, 300]
+    }
+  ],
+  "connections": {
+    "Generate Invoice Data": {
+      "main": [
+        [
+          {
+            "node": "Add Invoice to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Invoice to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
