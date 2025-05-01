@@ -21,7 +21,7 @@
     {
       "parameters": {
         "operation": "append",
-        "sheetId": "your-google-sheet-id",
+        "sheetId": "1mLwJq8R_lk_xAlXeZGOztAG0O6arQRm749fpgIse40Y",
         "range": "Invoices!A:D",
         "options": {}
       },
